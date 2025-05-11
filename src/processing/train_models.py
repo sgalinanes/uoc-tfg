@@ -35,6 +35,8 @@ logging.basicConfig(filename=results_dir/'run.log',
                     level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
 
+logging.info(f"*** DATA_DIR = {os.getenv('DATA_DIR')} ***")
+
 # ## Utilidades
 
 # In[2]:
