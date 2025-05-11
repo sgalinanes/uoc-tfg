@@ -26,6 +26,15 @@ import os
 from pathlib import Path
 import logging, json, datetime
 
+# Añade esto justo después de los imports:
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, (np.integer, np.floating)):
+            return obj.item()
+        return super().default(obj)
+    
 DATA_ROOT = Path(os.getenv('DATA_DIR', './data'))
 BASE_DIR  = DATA_ROOT / 'preprocessed'
 
@@ -779,12 +788,12 @@ for x in X_vals:
         logging.info("Multi-class classification with cost-sensitive learning is not possible with the current labels.")
 
 # guarda métricas y cierra
-with open(results_dir/'metrics.json', 'w') as f:
-    json.dump(overall_default, f, indent=2)
+#with open(results_dir/'metrics.json', 'w') as f:
+#    json.dump(overall_default, f, indent=2, cls=NumpyEncoder)
 
 # Also store forr overall_smote and overall_weighted
-with open(results_dir/'metrics_smote.json', 'w') as f:
-    json.dump(overall_smote, f, indent=2)
+#with open(results_dir/'metrics_smote.json', 'w') as f:
+#    json.dump(overall_smote, f, indent=2, cls=NumpyEncoder)
 
-with open(results_dir/'metrics_weighted.json', 'w') as f:
-    json.dump(overall_weighted, f, indent=2)
+#with open(results_dir/'metrics_weighted.json', 'w') as f:
+#    json.dump(overall_weighted, f, indent=2, cls=NumpyEncoder)
