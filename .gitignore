@@ -2,3 +2,5 @@ pads-parkinsons-disease-smartwatch-dataset-1.0.0/
 .venv/
 data/
 src/processing/catboost_info/
+reduced-data/
+data-s3/
