@@ -723,7 +723,7 @@ param_grids = {
 models = {
      "RandomForest": [RandomForestClassifier(random_state=42), {}],
      "XGBoost": [XGBClassifier(eval_metric='mlogloss', random_state=42), {}],
-     "CatBoost": [CatBoostClassifier(verbose=0, random_state=42), {}],
+     "CatBoost": [CatBoostClassifier(verbose=0, random_state=42, allow_writing_files=False), {}],
      "LightGBM": [LGBMClassifier(random_state=42), {'callbacks': [lgb.early_stopping(10, verbose=0), lgb.log_evaluation(period=0)]}],
 #     "LightGBM": [LGBMClassifier(random_state=42), {}]
 
