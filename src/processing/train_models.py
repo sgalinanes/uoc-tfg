@@ -306,13 +306,13 @@ sampling_rate = 100
 # 4. (Cont)   TSFEL only spectral features (Reduce 128832 features [10736 features p/c] to 1332 features [111 features p/c]  + questionnaire data
 # 5. (N/A)    Only questionnaire data (Uses only the questionnaire data, no movement data), used as a baseline
 
-pipeline_labels = ['questionnaire-only']#['basic', 'TSFEL-temporal', 'TSFEL-statistical', 'TSFEL-spectral', 'questionnaire-only']
+pipeline_labels = ['basic', 'TSFEL-temporal', 'TSFEL-statistical', 'TSFEL-spectral', 'questionnaire-only']
 
 pipeline_args = [
-    #{'domain': None, 'fs': None, 'ts_mode': None},  # Basic statistical features
-    #{'domain': 'temporal', 'fs': sampling_rate, 'ts_mode': None},  # TSFEL-temporal
-    #{'domain': 'statistical', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-statistical
-    #{'domain': 'spectral', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-spectral
+    {'domain': None, 'fs': None, 'ts_mode': None},  # Basic statistical features
+    {'domain': 'temporal', 'fs': sampling_rate, 'ts_mode': None},  # TSFEL-temporal
+    {'domain': 'statistical', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-statistical
+    {'domain': 'spectral', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-spectral
     None,  # Questionnaire-only
 ]
 
@@ -723,8 +723,8 @@ param_grids = {
 models = {
      "RandomForest": [RandomForestClassifier(random_state=42), {}],
      "XGBoost": [XGBClassifier(eval_metric='mlogloss', random_state=42), {}],
-     #"CatBoost": [CatBoostClassifier(verbose=0, random_state=42, allow_writing_files=False), {}],
-     #"LightGBM": [LGBMClassifier(random_state=42), {'callbacks': [lgb.early_stopping(10, verbose=0), lgb.log_evaluation(period=0)]}],
+     "CatBoost": [CatBoostClassifier(verbose=0, random_state=42, allow_writing_files=False), {}],
+     "LightGBM": [LGBMClassifier(random_state=42), {'callbacks': [lgb.early_stopping(10, verbose=0), lgb.log_evaluation(period=0)]}],
 #     "LightGBM": [LGBMClassifier(random_state=42), {}]
 
 }
