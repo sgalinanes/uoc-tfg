@@ -26,6 +26,9 @@ import os
 from pathlib import Path
 import logging, json, datetime
 
+N_THREADS = int(os.getenv("N_THREADS", os.cpu_count()))   # 32
+os.environ["OMP_NUM_THREADS"] = str(N_THREADS)            # XGBoost/LightGBM
+
 # Añade esto justo después de los imports:
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -306,11 +309,11 @@ sampling_rate = 100
 # 4. (Cont)   TSFEL only spectral features (Reduce 128832 features [10736 features p/c] to 1332 features [111 features p/c]  + questionnaire data
 # 5. (N/A)    Only questionnaire data (Uses only the questionnaire data, no movement data), used as a baseline
 
-pipeline_labels = ['basic', 'TSFEL-temporal', 'TSFEL-statistical', 'TSFEL-spectral', 'questionnaire-only']
+pipeline_labels = ['TSFEL-statistical', 'TSFEL-spectral', 'questionnaire-only'] #['basic', 'TSFEL-temporal', 
 
 pipeline_args = [
-    {'domain': None, 'fs': None, 'ts_mode': None},  # Basic statistical features
-    {'domain': 'temporal', 'fs': sampling_rate, 'ts_mode': None},  # TSFEL-temporal
+    #{'domain': None, 'fs': None, 'ts_mode': None},  # Basic statistical features
+    #{'domain': 'temporal', 'fs': sampling_rate, 'ts_mode': None},  # TSFEL-temporal
     {'domain': 'statistical', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-statistical
     {'domain': 'spectral', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-spectral
     None,  # Questionnaire-only
@@ -413,7 +416,7 @@ def tune_models(clf, param_grids, X_inner, y_inner, model_name, fit_params=None)
         param_grid=param_grids[model_name],
         scoring=scoring,
         cv=3,       # inner CV folds
-        n_jobs=-1,
+        n_jobs=N_THREADS,
         refit="accuracy",  # refit on accuracy
         #refit=refit_strategy  # custom refit to pick robust candidate
     )
@@ -697,34 +700,34 @@ def evaluate_cv(results, target_names):
 param_grids = {
     "RandomForest": {
         # default: { "n_estimators": 100, "max_depth": None, "max_features": "sqrt" }
-        "n_estimators": [100, 300, 500],
+        "n_estimators": [100, 300],
         "max_depth": [None, 10, 20],
         "max_features": ["sqrt", "log2"]
     },
     "XGBoost": {
         # default: { "learning_rate": 0.3, "max_depth": 6, "subsample": 1.0 }
-        "learning_rate": [0.1, 0.3, 0.01, 0.05],
-        "max_depth": [3, 6, 9, 12],
-        "subsample": [0.7, 1.0, 0.5, 1.0]
+        "learning_rate": [0.1, 0.3, 0.05],
+        "max_depth": [3, 6],
+        "subsample": [0.7, 1.0]
     },
     "CatBoost": {
         # default: { "depth": 6, "l2_leaf_reg": 3 }
         "depth": [4, 6, 10],
-        "l2_leaf_reg": [3, 5, 10]
+        "l2_leaf_reg": [3, 5]
     },
     "LightGBM": {
         # default: { "num_leaves": 31, "learning_rate": 0.1, "min_child_samples": 20 }
-        "num_leaves": [20, 31, 50, 100],
-        "learning_rate": [0.05, 0.1, 0.01, 0.2],
-        "min_child_samples": [10, 20, 30, 50]
+        "num_leaves": [20, 31, 50],
+        "learning_rate": [0.05, 0.1, 0.2],
+        "min_child_samples": [10, 20]
     }
 }
 
 models = {
-     "RandomForest": [RandomForestClassifier(random_state=42), {}],
-     "XGBoost": [XGBClassifier(eval_metric='mlogloss', random_state=42), {}],
-     "CatBoost": [CatBoostClassifier(verbose=0, random_state=42, allow_writing_files=False), {}],
-     "LightGBM": [LGBMClassifier(random_state=42), {'callbacks': [lgb.early_stopping(10, verbose=0), lgb.log_evaluation(period=0)]}],
+     "RandomForest": [RandomForestClassifier(n_jobs=N_THREADS, random_state=42), {}],
+     "XGBoost": [XGBClassifier(n_jobs=N_THREADS, eval_metric='mlogloss', random_state=42), {}],
+     "CatBoost": [CatBoostClassifier(thread_count=N_THREADS, verbose=0, random_state=42, allow_writing_files=False), {}],
+     "LightGBM": [LGBMClassifier(n_jobs=N_THREADS, random_state=42), {'callbacks': [lgb.early_stopping(10, verbose=0), lgb.log_evaluation(period=0)]}],
 #     "LightGBM": [LGBMClassifier(random_state=42), {}]
 
 }
