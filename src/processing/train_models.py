@@ -309,12 +309,12 @@ sampling_rate = 100
 # 4. (Cont)   TSFEL only spectral features (Reduce 128832 features [10736 features p/c] to 1332 features [111 features p/c]  + questionnaire data
 # 5. (N/A)    Only questionnaire data (Uses only the questionnaire data, no movement data), used as a baseline
 
-pipeline_labels = ['TSFEL-statistical', 'TSFEL-spectral', 'questionnaire-only'] #['basic', 'TSFEL-temporal', 
+pipeline_labels = ['TSFEL-spectral', 'questionnaire-only'] #['basic', 'TSFEL-temporal', 
 
 pipeline_args = [
     #{'domain': None, 'fs': None, 'ts_mode': None},  # Basic statistical features
     #{'domain': 'temporal', 'fs': sampling_rate, 'ts_mode': None},  # TSFEL-temporal
-    {'domain': 'statistical', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-statistical
+    #{'domain': 'statistical', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-statistical
     {'domain': 'spectral', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-spectral
     None,  # Questionnaire-only
 ]
