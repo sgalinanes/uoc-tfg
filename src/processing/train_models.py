@@ -724,10 +724,10 @@ param_grids = {
 }
 
 models = {
-     "RandomForest": [RandomForestClassifier(n_jobs=N_THREADS, random_state=42), {}],
-     "XGBoost": [XGBClassifier(n_jobs=N_THREADS, eval_metric='mlogloss', random_state=42), {}],
-     "CatBoost": [CatBoostClassifier(thread_count=N_THREADS, verbose=0, random_state=42, allow_writing_files=False), {}],
-     "LightGBM": [LGBMClassifier(n_jobs=N_THREADS, random_state=42), {'callbacks': [lgb.early_stopping(10, verbose=0), lgb.log_evaluation(period=0)]}],
+     "RandomForest": [RandomForestClassifier(n_jobs=1, random_state=42), {}],
+     "XGBoost": [XGBClassifier(n_jobs=1, tree_method="hist", predictor="auto", eval_metric='mlogloss', random_state=42), {}],
+     "CatBoost": [CatBoostClassifier(thread_count=1, verbose=0, random_state=42, allow_writing_files=False), {}],
+     "LightGBM": [LGBMClassifier(n_jobs=1, random_state=42), {'callbacks': [lgb.early_stopping(10, verbose=0), lgb.log_evaluation(period=0)]}],
 #     "LightGBM": [LGBMClassifier(random_state=42), {}]
 
 }
