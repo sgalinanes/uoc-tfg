@@ -712,13 +712,13 @@ param_grids = {
     },
     "CatBoost": {
         # default: { "depth": 6, "l2_leaf_reg": 3 }
-        "depth": [4, 6, 10],
-        "l2_leaf_reg": [3, 5]
+        "depth": [6],
+        "l2_leaf_reg": [3]
     },
     "LightGBM": {
         # default: { "num_leaves": 31, "learning_rate": 0.1, "min_child_samples": 20 }
-        "num_leaves": [20, 31, 50],
-        "learning_rate": [0.05, 0.1, 0.2],
+        "num_leaves": [20, 31],
+        "learning_rate": [0.05, 0.1],
         "min_child_samples": [10, 20]
     }
 }
