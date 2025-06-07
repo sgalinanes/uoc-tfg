@@ -4,3 +4,9 @@ data/
 src/processing/catboost_info/
 reduced-data/
 data-s3/
+raw/
+results/
+*.sh
+*.pem
+*.json
+processing/reduced_classification.ipynb

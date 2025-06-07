@@ -309,13 +309,13 @@ sampling_rate = 100
 # 4. (Cont)   TSFEL only spectral features (Reduce 128832 features [10736 features p/c] to 1332 features [111 features p/c]  + questionnaire data
 # 5. (N/A)    Only questionnaire data (Uses only the questionnaire data, no movement data), used as a baseline
 
-pipeline_labels = ['TSFEL-spectral', 'questionnaire-only'] #['basic', 'TSFEL-temporal', 
+pipeline_labels = ['questionnaire-only'] #['basic', 'TSFEL-temporal', 
 
 pipeline_args = [
     #{'domain': None, 'fs': None, 'ts_mode': None},  # Basic statistical features
     #{'domain': 'temporal', 'fs': sampling_rate, 'ts_mode': None},  # TSFEL-temporal
     #{'domain': 'statistical', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-statistical
-    {'domain': 'spectral', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-spectral
+    #{'domain': 'spectral', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-spectral
     None,  # Questionnaire-only
 ]
 
@@ -704,30 +704,30 @@ param_grids = {
         "max_depth": [None, 10, 20],
         "max_features": ["sqrt", "log2"]
     },
-    "XGBoost": {
-        # default: { "learning_rate": 0.3, "max_depth": 6, "subsample": 1.0 }
-        "learning_rate": [0.1, 0.3, 0.05],
-        "max_depth": [3, 6],
-        "subsample": [0.7, 1.0]
-    },
-    "CatBoost": {
-        # default: { "depth": 6, "l2_leaf_reg": 3 }
-        "depth": [6],
-        "l2_leaf_reg": [3]
-    },
-    "LightGBM": {
-        # default: { "num_leaves": 31, "learning_rate": 0.1, "min_child_samples": 20 }
-        "num_leaves": [20, 31],
-        "learning_rate": [0.05, 0.1],
-        "min_child_samples": [10, 20]
-    }
+    #"XGBoost": {
+    #    # default: { "learning_rate": 0.3, "max_depth": 6, "subsample": 1.0 }
+    #    "learning_rate": [0.1, 0.3, 0.05],
+    #    "max_depth": [3, 6],
+    #    "subsample": [0.7, 1.0]
+    #},
+    #"CatBoost": {
+    #    # default: { "depth": 6, "l2_leaf_reg": 3 }
+    #    "depth": [6],
+    #    "l2_leaf_reg": [3]
+    #},
+    #"LightGBM": {
+    #    # default: { "num_leaves": 31, "learning_rate": 0.1, "min_child_samples": 20 }
+    #    "num_leaves": [20, 31],
+    #    "learning_rate": [0.05, 0.1],
+    #    "min_child_samples": [10, 20]
+    #}
 }
 
 models = {
      "RandomForest": [RandomForestClassifier(n_jobs=1, random_state=42), {}],
-     "XGBoost": [XGBClassifier(n_jobs=1, tree_method="hist", predictor="auto", eval_metric='mlogloss', random_state=42), {}],
-     "CatBoost": [CatBoostClassifier(thread_count=1, verbose=0, random_state=42, allow_writing_files=False), {}],
-     "LightGBM": [LGBMClassifier(n_jobs=1, random_state=42), {'callbacks': [lgb.early_stopping(10, verbose=0), lgb.log_evaluation(period=0)]}],
+     #"XGBoost": [XGBClassifier(n_jobs=1, tree_method="hist", predictor="auto", eval_metric='mlogloss', random_state=42), {}],
+     #"CatBoost": [CatBoostClassifier(thread_count=1, verbose=0, random_state=42, allow_writing_files=False), {}],
+     #"LightGBM": [LGBMClassifier(n_jobs=1, random_state=42), {'callbacks': [lgb.early_stopping(10, verbose=0), lgb.log_evaluation(period=0)]}],
 #     "LightGBM": [LGBMClassifier(random_state=42), {}]
 
 }
