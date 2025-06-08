@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-
-# In[1]:
-
-
 import numpy as np
 import pandas as pd
 from imblearn.over_sampling import SMOTE
@@ -16,20 +12,18 @@ from pathlib import Path
 import tsfel
 import numpy as np
 from sklearn.model_selection import StratifiedKFold, GridSearchCV
-from sklearn.metrics import (accuracy_score, f1_score, log_loss, confusion_matrix, classification_report)
+from sklearn.metrics import (accuracy_score, f1_score, log_loss)
 from sklearn.base import clone
 import numpy as np
-from tabulate import tabulate
 import lightgbm as lgb
 from sklearn.utils.class_weight import compute_class_weight
 import os
 from pathlib import Path
-import logging, json, datetime
+import logging, json
 
 N_THREADS = int(os.getenv("N_THREADS", os.cpu_count()))   # 32
 os.environ["OMP_NUM_THREADS"] = str(N_THREADS)            # XGBoost/LightGBM
 
-# Añade esto justo después de los imports:
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.ndarray):
@@ -40,7 +34,6 @@ class NumpyEncoder(json.JSONEncoder):
     
 DATA_ROOT = Path(os.getenv('DATA_DIR', './data'))
 BASE_DIR  = DATA_ROOT / 'preprocessed'
-
 results_dir = Path('results'); results_dir.mkdir(exist_ok=True)
 
 logging.basicConfig(filename=results_dir/'run.log',
@@ -49,11 +42,7 @@ logging.basicConfig(filename=results_dir/'run.log',
 
 logging.info(f"*** DATA_DIR = {os.getenv('DATA_DIR')} ***")
 
-# ## Utilidades
-
-# In[2]:
-
-
+## Utilidades
 def check_robustness(metric_name, metric_values, threshold_percent=10):
     """
     Check the robustness of a model based on k-fold metric values.
@@ -269,15 +258,11 @@ def extract_ts_features(label, channel_data, domain=None, fs=None):
 
 # ## Carga de datos
 # 
-# Requisite: Python 3.12 (por catboost). brew install libomp para xgboost
-# 
+# Requisite: Python 3.12 (por catboost). 
+# brew install libomp para xgboost
 # tsfel explicaciones: https://github.com/fraunhoferportugal/tsfel/blob/v0.1.9/tsfel/feature_extraction/features.json
 # 
 # En base a los datos preprocesados, entrenaremos modelos de clasificacion bajo distintos escenarios:
-# 
-
-# In[5]:
-
 
 # Cargar metadatos
 file_list = pd.read_csv(BASE_DIR / 'file_list.csv', dtype={'id': str})
@@ -309,13 +294,13 @@ sampling_rate = 100
 # 4. (Cont)   TSFEL only spectral features (Reduce 128832 features [10736 features p/c] to 1332 features [111 features p/c]  + questionnaire data
 # 5. (N/A)    Only questionnaire data (Uses only the questionnaire data, no movement data), used as a baseline
 
-pipeline_labels = ['questionnaire-only'] #['basic', 'TSFEL-temporal', 
+pipeline_labels = ['basic', 'TSFEL-temporal', 'TSFEL-statistical', 'TSFEL-spectral', 'questionnaire-only']
 
 pipeline_args = [
-    #{'domain': None, 'fs': None, 'ts_mode': None},  # Basic statistical features
-    #{'domain': 'temporal', 'fs': sampling_rate, 'ts_mode': None},  # TSFEL-temporal
-    #{'domain': 'statistical', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-statistical
-    #{'domain': 'spectral', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-spectral
+    {'domain': None, 'fs': None, 'ts_mode': None},  # Basic statistical features
+    {'domain': 'temporal', 'fs': sampling_rate, 'ts_mode': None},  # TSFEL-temporal
+    {'domain': 'statistical', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-statistical
+    {'domain': 'spectral', 'fs': sampling_rate, 'ts_mode': 'continuous'},  # TSFEL-spectral
     None,  # Questionnaire-only
 ]
 
@@ -384,11 +369,7 @@ for x in X_vals:
 
 # ## Modelos de clasificacion
 
-# In[6]:
-
-
 # -----------------------------------------------------------------------------
-# Labels mapping for reference:
 # 0: HC
 # 1: PD
 # 2: DD
@@ -423,52 +404,6 @@ def tune_models(clf, param_grids, X_inner, y_inner, model_name, fit_params=None)
     grid.fit(X_inner, y_inner, **fit_params)
     return (grid.best_estimator_, grid.best_params_)
 
-# TODO: Analyze the refit_strategy function further.
-#def refit_strategy(cv_results):
-#    """
-#    Custom refit strategy that uses both accuracy and weighted F1 metrics.
-#    
-#    For each hyperparameter candidate (as provided in GridSearchCV’s cv_results_),
-#    we compute the mean and standard deviation for both 'accuracy' and 'f1_weighted'.
-#    We then calculate the coefficient of variation (CV) for each metric in percentage.
-#    The composite score is calculated as:
-#    
-#        composite = 0.5*(mean_accuracy + mean_f1_weighted) - lambda_val * 0.5*(CV_accuracy + CV_f1_weighted)
-#    
-#    A candidate with a high mean score and a low CV will be preferred.
-#    
-#    Parameters:
-#        cv_results (dict): The cv_results_ dictionary from GridSearchCV. It must contain the keys:
-#            "mean_test_accuracy", "std_test_accuracy", 
-#            "mean_test_f1_weighted", "std_test_f1_weighted".
-#    
-#    Returns:
-#        best_index (int): The index (as in cv_results) of the best candidate.
-#    """
-#    df = pd.DataFrame(cv_results)
-#    required_keys = ["mean_test_accuracy", "std_test_accuracy", "mean_test_f1_weighted", "std_test_f1_weighted"]
-#    if not all(key in df.columns for key in required_keys):
-#        raise ValueError(f"cv_results must contain the keys: {required_keys}")
-#    
-#    # Means and standard deviations for accuracy and weighted F1.
-#    mean_acc = df["mean_test_accuracy"]
-#    std_acc  = df["std_test_accuracy"]
-#    mean_f1  = df["mean_test_f1_weighted"]
-#    std_f1   = df["std_test_f1_weighted"]
-#    
-#    # Compute coefficient of variation (CV) in percentages.
-#    cv_acc = (std_acc / mean_acc) * 100
-#    cv_f1  = (std_f1 / mean_f1) * 100
-#    
-#    # Lambda controls the weight given to robustness.
-#    lambda_val = 0.01
-#    
-#    # Composite score: we want high mean and low CV.
-#    composite = 0.5 * (mean_acc + mean_f1) - lambda_val * 0.5 * (cv_acc + cv_f1)
-#
-#    best_index = composite.idxmax()
-#    return best_index
-
 def run_cv(X, y, models, n_splits=5, mode="default", class_weights=None, tune_inner=False, param_grids=None):
     """
     Unified cross-validation runner with optional inner-loop hyperparameter tuning.
@@ -498,7 +433,6 @@ def run_cv(X, y, models, n_splits=5, mode="default", class_weights=None, tune_in
             "y_pred": list of predicted label arrays per fold,
             "y_pred_proba": list of predicted probability arrays per fold.
     """
-    # Suppress warnings regarding use_label_encoder and feature names
     # Ensure X is a DataFrame with valid feature names.
     if not hasattr(X, "columns"):
         X = pd.DataFrame(X, columns=[f"f{i}" for i in range(X.shape[1])])
@@ -704,40 +638,34 @@ param_grids = {
         "max_depth": [None, 10, 20],
         "max_features": ["sqrt", "log2"]
     },
-    #"XGBoost": {
-    #    # default: { "learning_rate": 0.3, "max_depth": 6, "subsample": 1.0 }
-    #    "learning_rate": [0.1, 0.3, 0.05],
-    #    "max_depth": [3, 6],
-    #    "subsample": [0.7, 1.0]
-    #},
-    #"CatBoost": {
-    #    # default: { "depth": 6, "l2_leaf_reg": 3 }
-    #    "depth": [6],
-    #    "l2_leaf_reg": [3]
-    #},
-    #"LightGBM": {
-    #    # default: { "num_leaves": 31, "learning_rate": 0.1, "min_child_samples": 20 }
-    #    "num_leaves": [20, 31],
-    #    "learning_rate": [0.05, 0.1],
-    #    "min_child_samples": [10, 20]
-    #}
+    "XGBoost": {
+        # default: { "learning_rate": 0.3, "max_depth": 6, "subsample": 1.0 }
+        "learning_rate": [0.1, 0.3, 0.05],
+        "max_depth": [3, 6],
+        "subsample": [0.7, 1.0]
+    },
+    "CatBoost": {
+        # default: { "depth": 6, "l2_leaf_reg": 3 }
+        "depth": [6],
+        "l2_leaf_reg": [3]
+    },
+    "LightGBM": {
+        # default: { "num_leaves": 31, "learning_rate": 0.1, "min_child_samples": 20 }
+        "num_leaves": [20, 31],
+        "learning_rate": [0.05, 0.1],
+        "min_child_samples": [10, 20]
+    }
 }
 
 models = {
      "RandomForest": [RandomForestClassifier(n_jobs=1, random_state=42), {}],
-     #"XGBoost": [XGBClassifier(n_jobs=1, tree_method="hist", predictor="auto", eval_metric='mlogloss', random_state=42), {}],
-     #"CatBoost": [CatBoostClassifier(thread_count=1, verbose=0, random_state=42, allow_writing_files=False), {}],
-     #"LightGBM": [LGBMClassifier(n_jobs=1, random_state=42), {'callbacks': [lgb.early_stopping(10, verbose=0), lgb.log_evaluation(period=0)]}],
-#     "LightGBM": [LGBMClassifier(random_state=42), {}]
-
+     "XGBoost": [XGBClassifier(n_jobs=1, tree_method="hist", predictor="auto", eval_metric='mlogloss', random_state=42), {}],
+     "CatBoost": [CatBoostClassifier(thread_count=1, verbose=0, random_state=42, allow_writing_files=False), {}],
+     "LightGBM": [LGBMClassifier(n_jobs=1, random_state=42), {'callbacks': [lgb.early_stopping(10, verbose=0), lgb.log_evaluation(period=0)]}],
 }
 
 
 # ## Modelos multiclase (PD vs DD vs HC)
-
-# In[7]:
-
-
 for x in X_vals:
     X = X_vals[x]
     y = y_vals[x]
@@ -790,13 +718,12 @@ for x in X_vals:
     else:
         logging.info("Multi-class classification with cost-sensitive learning is not possible with the current labels.")
 
-# guarda métricas y cierra
-#with open(results_dir/'metrics.json', 'w') as f:
-#    json.dump(overall_default, f, indent=2, cls=NumpyEncoder)
+# Store metrics
+with open(results_dir/'metrics.json', 'w') as f:
+    json.dump(overall_default, f, indent=2, cls=NumpyEncoder)
 
-# Also store forr overall_smote and overall_weighted
-#with open(results_dir/'metrics_smote.json', 'w') as f:
-#    json.dump(overall_smote, f, indent=2, cls=NumpyEncoder)
+with open(results_dir/'metrics_smote.json', 'w') as f:
+    json.dump(overall_smote, f, indent=2, cls=NumpyEncoder)
 
-#with open(results_dir/'metrics_weighted.json', 'w') as f:
-#    json.dump(overall_weighted, f, indent=2, cls=NumpyEncoder)
+with open(results_dir/'metrics_weighted.json', 'w') as f:
+    json.dump(overall_weighted, f, indent=2, cls=NumpyEncoder)
